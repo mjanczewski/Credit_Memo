@@ -4,7 +4,6 @@ import numpy as np
 class ReadCreditMemoRaport:
     def read_credit_memo_raport(self):
         credit_memo_raport = pd.read_excel("cm.xlsx")
-        # print(credit_memo_raport)
         return credit_memo_raport
 
 class ReadSalesRaport:
