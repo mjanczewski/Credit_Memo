@@ -2,9 +2,17 @@ import pandas as pd
 import numpy as np
 
 
+credit_memo_number = ""
+
+
 class ReadCreditMemoRaport:
     def read_credit_memo_raport(self):
         credit_memo_raport = pd.read_excel("cm.xlsx")
+        credit_memo_number = credit_memo_raport["POS Cr Memo #"]
+        credit_memo_number.drop_duplicates(
+            keep="first", inplace=True, ignore_index=True
+        )
+        # print(credit_memo_number)
         return credit_memo_raport
 
 
@@ -39,7 +47,6 @@ class JoinRaports:
             "Selling price",
             "Purchase price",
             "Unit Rebate (DC)",
-            "Invoice",
         ]
         rename_columns = {
             "Ship to Country": "country ",
@@ -57,61 +64,62 @@ class JoinRaports:
 
         #
 
-        marged_reports_1 = pd.merge(
+        credit_memo_number = credit_memo.loc[:0, ["POS Cr Memo #"]]
+        credit_memo_number = credit_memo_number.to_string(header=False, index=False)
+
+        merged_reports_1 = pd.merge(
             sales_raport,
             credit_memo,
             left_on=["Invoice Number", "SanDisk Part Number"],
             right_on=["Invoice", "Debit MPN"],
         )
 
-        marged_reports_2 = pd.merge(
+        merged_reports_2 = pd.merge(
             sales_raport,
             credit_memo,
             left_on=["Spi Number", "SanDisk Part Number"],
             right_on=["Invoice", "Debit MPN"],
         )
 
-        marged_reports_3 = marged_reports_2._append(marged_reports_1, ignore_index=True)
+        merged_reports_3 = merged_reports_2._append(merged_reports_1, ignore_index=True)
 
-        # marged_reports_1.to_excel("Merged_1.xlsx")
-        # marged_reports_2.to_excel("Merged_2.xlsx")
+        # merged_reports_1.to_excel("Merged_1.xlsx")
+        # merged_reports_2.to_excel("Merged_2.xlsx")
 
-        marged_reports_3 = marged_reports_3[show_columns]
+        merged_reports_3 = merged_reports_3[show_columns]
 
-        marged_reports_3.rename(columns=rename_columns, inplace=True)
+        merged_reports_3.rename(columns=rename_columns, inplace=True)
 
-        marged_reports_3["USD"] = (
-            marged_reports_3["Sales Quantity"] * marged_reports_3["rabat"]
+        merged_reports_3["USD"] = (
+            merged_reports_3["Sales Quantity"] * merged_reports_3["rabat"]
         )
-        marged_reports_3["Kurs USD"] = [
-            float(str(i).replace(",", ".")) for i in marged_reports_3["Kurs USD"]
+        merged_reports_3["Kurs USD"] = [
+            float(str(i).replace(",", ".")) for i in merged_reports_3["Kurs USD"]
         ]
-        marged_reports_3["PLN"] = marged_reports_3["USD"] * marged_reports_3["Kurs USD"]
-        marged_reports_3["wartość sprzedaży dla CM"] = (
-            marged_reports_3["Sales Quantity"]
-            * marged_reports_3["Selling price: jedn. cena sprzedaży"]
+        merged_reports_3["PLN"] = merged_reports_3["USD"] * merged_reports_3["Kurs USD"]
+        merged_reports_3["wartość sprzedaży dla CM"] = (
+            merged_reports_3["Sales Quantity"]
+            * merged_reports_3["Selling price: jedn. cena sprzedaży"]
         )
-        marged_reports_3["wartość zakupu dla CM"] = (
-            marged_reports_3["Sales Quantity"]
-            * marged_reports_3["Purchase price: jedn. cena zakupu"]
+        merged_reports_3["wartość zakupu dla CM"] = (
+            merged_reports_3["Sales Quantity"]
+            * merged_reports_3["Purchase price: jedn. cena zakupu"]
         )
-        marged_reports_3["wartość sprzedaży z uwzl. CM"] = (
-            marged_reports_3["PLN"] + marged_reports_3["wartość sprzedaży dla CM"]
+        merged_reports_3["wartość sprzedaży z uwzl. CM"] = (
+            merged_reports_3["PLN"] + merged_reports_3["wartość sprzedaży dla CM"]
         )
-        marged_reports_3[
+        merged_reports_3[
             "marża (wartość sprzedaży z uwzgl. CM minus wartość zakupu dla CM)"
         ] = (
-            marged_reports_3["wartość sprzedaży z uwzl. CM"]
-            - marged_reports_3["wartość zakupu dla CM"]
+            merged_reports_3["wartość sprzedaży z uwzl. CM"]
+            - merged_reports_3["wartość zakupu dla CM"]
         )
 
-        marged_reports_3.drop_duplicates(
+        merged_reports_3.drop_duplicates(
             subset=None, keep="first", inplace=True, ignore_index=True
         )
 
-        marged_reports_3.to_excel("Merged_3.xlsx")
-
-        print(marged_reports_3.duplicated().sum())
+        merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
 
         # =========================================================================
 
