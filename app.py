@@ -47,6 +47,7 @@ class JoinRaports:
             "Selling price",
             "Purchase price",
             "Unit Rebate (DC)",
+            "Invoice",
         ]
         rename_columns = {
             "Ship to Country": "country ",
@@ -120,6 +121,23 @@ class JoinRaports:
         )
 
         merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
+
+        merged_reports_3_test_invoice = pd.DataFrame()
+        merged_reports_3_test_invoice["Invoice_reports"] = merged_reports_3["Invoice"]
+        credit_memo_test_invoice = credit_memo["Invoice"]
+
+        merged_test = pd.merge(
+            merged_reports_3_test_invoice,
+            credit_memo_test_invoice,
+            left_on=["Invoice_reports"],
+            right_on=["Invoice"],
+            how="outer",
+        )
+
+        merged_test_filtered = merged_test[merged_test.isna().any(axis=1)]
+        print(merged_test_filtered)
+
+        merged_test_filtered.to_excel(f"Test_{credit_memo_number}.xlsx")
 
         # =========================================================================
 
