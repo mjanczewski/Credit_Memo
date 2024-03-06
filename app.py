@@ -48,6 +48,7 @@ class JoinRaports:
             "Purchase price",
             "Unit Rebate (DC)",
             "Invoice",
+            "POS Ship Qty",
         ]
         rename_columns = {
             "Ship to Country": "country ",
@@ -86,6 +87,20 @@ class JoinRaports:
 
         # merged_reports_1.to_excel("Merged_1.xlsx")
         # merged_reports_2.to_excel("Merged_2.xlsx")
+        merged_reports_3["roznica_wz"] = (
+            merged_reports_3["Sales Quantity"] > merged_reports_3["POS Ship Qty"]
+        )
+
+        if merged_reports_3["roznica_wz"].bool:
+            merged_reports_3["WZ"] = merged_reports_3["Invoice"]
+
+        wz_number = pd.DataFrame()
+        wz_number["WZ"] = merged_reports_3["WZ"]
+        wz_number["roznica_wz"] = merged_reports_3["roznica_wz"]
+        wz_number["Debit MPN"] = merged_reports_3["Debit MPN"]
+        wz_number = wz_number[wz_number["roznica_wz"] == True]
+
+        # merged_reports_3.to_excel("test_wyswietlania_wz.xlsx", index=False)
 
         merged_reports_3 = merged_reports_3[show_columns]
 
@@ -120,6 +135,46 @@ class JoinRaports:
             subset=None, keep="first", inplace=True, ignore_index=True
         )
 
+        sales_from_bi = merged_reports_3.groupby(
+            ["SanDisk Part Number"], as_index=False
+        )["Sales Quantity"].sum()
+
+        sales_from_wd = credit_memo.groupby(["Debit MPN"], as_index=False)[
+            "POS Ship Qty"
+        ].sum()
+
+        # sales_from_wd.to_excel("test_WD.xlsx")
+
+        # sales_from_bi.to_excel("Test.xlsx")
+
+        sales_test = pd.merge(
+            sales_from_bi,
+            sales_from_wd,
+            left_on="SanDisk Part Number",
+            right_on="Debit MPN",
+            how="outer",
+        )
+
+        sales_test["Różnica"] = (
+            sales_test["POS Ship Qty"] - sales_test["Sales Quantity"]
+        )
+
+        # sales_test["Róznica T/F"] = (
+        #     sales_test["Sales Quantity"] != sales_test["POS Ship Qty"]
+        # )
+
+        sales_test = pd.merge(
+            sales_test,
+            wz_number,
+            left_on="SanDisk Part Number",
+            right_on="Debit MPN",
+            how="left",
+        )
+        sales_test.drop(["roznica_wz", "Debit MPN_y"], axis=1, inplace=True)
+
+        sales_test.to_excel(f"WZ_{credit_memo_number}.xlsx", index=False)
+        # print(sales_from_bi)
+
         merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
 
         merged_reports_3_test_invoice = pd.DataFrame()
@@ -135,7 +190,7 @@ class JoinRaports:
         )
 
         merged_test_filtered = merged_test[merged_test.isna().any(axis=1)]
-        print(merged_test_filtered)
+        # print(merged_test_filtered)
 
         merged_test_filtered.to_excel(f"Test_{credit_memo_number}.xlsx")
 
