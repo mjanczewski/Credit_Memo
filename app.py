@@ -29,6 +29,12 @@ class JoinRaports:
         self.sales_raport = sales_raport
 
     def join_raports(self):
+        print(
+            """
+        Aplikacja generująca Credit Memo CSI S.A.
+        Autor: Marek Janczewski
+        """
+        )
         show_columns = [
             "Partner name",
             "Ship to Country",
@@ -48,7 +54,7 @@ class JoinRaports:
             "Purchase price",
             "Unit Rebate (DC)",
             "Invoice",
-            "POS Ship Qty",
+            # "POS Ship Qty",
         ]
         rename_columns = {
             "Ship to Country": "country ",
@@ -175,7 +181,7 @@ class JoinRaports:
         sales_test.to_excel(f"WZ_{credit_memo_number}.xlsx", index=False)
         # print(sales_from_bi)
 
-        merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
+        # merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
 
         merged_reports_3_test_invoice = pd.DataFrame()
         merged_reports_3_test_invoice["Invoice_reports"] = merged_reports_3["Invoice"]
@@ -193,6 +199,8 @@ class JoinRaports:
         # print(merged_test_filtered)
 
         merged_test_filtered.to_excel(f"Test_{credit_memo_number}.xlsx")
+        merged_reports_3.drop(["Invoice"], axis=1, inplace=True)
+        merged_reports_3.to_excel(f"Credit_Memo_{credit_memo_number}.xlsx", index=False)
 
         # =========================================================================
 
